@@ -126,6 +126,7 @@ ParsedArgs* parse_args(int argc, char *argv[])
     if (argc == 1) // Если аргументов нет (только имя программы), показать справку
     {
         printf(COLOR_STR(LOGO, LIGHT_BLUE));
+        free_parsed_args(args);
         exit(EXIT_SUCCESS);
     }
 
@@ -135,6 +136,7 @@ ParsedArgs* parse_args(int argc, char *argv[])
         if (strcmp(argv[i], HELP_ARG) == 0) 
         {
             print_usage(program_name);
+            free_parsed_args(args);
             exit(EXIT_SUCCESS);
         }
     }
