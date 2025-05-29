@@ -80,7 +80,7 @@ int main(int argc, char *argv[])
             if (result == 0)
                 PrintCompressionStats(inputFiles, args->output_path);
             else
-                fprintf(stderr, "Compression failed.\n");
+                fprintf(stderr, COLOR_STR("Compression failed.\n", RED));
 
             FreeFileList(inputFiles);
             break;
@@ -103,7 +103,7 @@ int main(int argc, char *argv[])
 
             int res = DecodeArchive(archive, args->output_path, wanted, wantedCount, wantedCount == 0);
             if (res != 0)
-                fprintf(stderr, "Decompression failed.\n");
+                fprintf(stderr, COLOR_STR("Decompression failed.\n", RED));
             break;
         }
 

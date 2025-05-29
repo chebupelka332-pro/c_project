@@ -85,29 +85,44 @@ void free_parsed_args(ParsedArgs *args)
     free(args);
 }
 
-static void validate_args(ParsedArgs args, const char* program_name)
+static void validate_args(ParsedArgs *args, const char* program_name)
 {
-    if (args.mode == MODE_NONE)
+    if (args->mode == MODE_NONE)
+    {
+        free_parsed_args(args);
         print_error_and_exit("No operation mode specified (-c or -d).", program_name);
+    }
 
-    if (args.mode == MODE_COMPRESS)
+    if (args->mode == MODE_COMPRESS)
     {
         // Для сжатия обязателен -o
-        if (args.output_path == NULL)
+        if (args->output_path == NULL)
+        {
+            free_parsed_args(args);
             print_error_and_exit("Output path (-o) is mandatory for compression.", program_name);
+        }
 
         // Для сжатия должны быть входные пути
-        if (args.num_input_paths == 0)
+        if (args->num_input_paths == 0)
+        {
+            free_parsed_args(args);
             print_error_and_exit("No input files or directory specified for compression.", program_name);
+        }
     } 
-    else if (args.mode == MODE_DECOMPRESS)
+    else if (args->mode == MODE_DECOMPRESS)
     {
             // Для распаковки должен быть ровно один входной путь (архивный файл)
-            if (args.num_input_paths != 1)
+            if (args->num_input_paths != 1)
+            {
+                free_parsed_args(args);
                 print_error_and_exit("Decompression requires exactly one input archive file.", program_name);
+            }
 
-            if (args.symbol_size != 0U)
+            if (args->symbol_size != 0U)
+            {
+                free_parsed_args(args);
                 print_error_and_exit("-s option is only valid for compression mode (-c).", program_name);
+            }
     }
 }
 
@@ -147,42 +162,66 @@ ParsedArgs* parse_args(int argc, char *argv[])
         if (strcmp(argv[i], COMPRESS_ARG) == 0) 
         {
             if (args->mode != MODE_NONE)
+            {
+                free_parsed_args(args);
                 print_error_and_exit("Cannot specify both -c and -d.", program_name);
+            }
             args->mode = MODE_COMPRESS;
         } 
         else if (strcmp(argv[i], DECOMPRESS_ARG) == 0) 
         {
             if (args->mode != MODE_NONE)
+            {
+                free_parsed_args(args);
                 print_error_and_exit("Cannot specify both -c and -d.", program_name);
+            }
             args->mode = MODE_DECOMPRESS;
         } 
         else if (strcmp(argv[i], OUTPUT_ARG) == 0) 
         {
             if (args->output_path != NULL)
+            {
+                free_parsed_args(args);
                 print_error_and_exit("Output path specified multiple times.", program_name);
+            }
 
             if (i + 1 >= argc)
+            {
+                free_parsed_args(args);
                 print_error_and_exit("Missing argument for -o.", program_name);
+            }
 
             args->output_path = malloc(sizeof(char) * (strlen(argv[i+1]) + 1));
             strcpy(args->output_path, argv[i+1]);
 
             if (args->output_path == NULL)
+            {
+                free_parsed_args(args);
                 print_error_and_exit("Memory allocation failed.", program_name);
+            }
             i++;
         }
         else if (strcmp(argv[i], SYMBOL_SIZE_ARG) == 0)
         {
             if (i + 1 >= argc)
+            {
+                free_parsed_args(args);
                 print_error_and_exit("Missing argument for -s.", program_name);
+            }
 
             if (args->symbol_size != 0) // Проверяем, не задан ли уже размер символа
+            {
+                free_parsed_args(args);
                 print_error_and_exit("Symbol size specified multiple times.", program_name);
+            }
             
             uint32_t size = atoi(argv[i+1]);
 
             if (size != 1 && size != 2)
+            {
+                free_parsed_args(args);
                 print_error_and_exit("Invalid value for -s. Must be 1 or 2.", program_name);
+            }
 
             args->symbol_size = size;
             i++;
@@ -214,7 +253,7 @@ ParsedArgs* parse_args(int argc, char *argv[])
     if (args->mode == MODE_COMPRESS && args->symbol_size == 0)
         args->symbol_size = 1;
 
-    validate_args(*args, program_name);
+    validate_args(args, program_name);
 
     return args;
 }
